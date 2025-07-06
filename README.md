@@ -21,7 +21,7 @@ If you like solving tough engineering problems **and** debating why a straddle b
 
 ## Current feature map
 
-* **Market Data ETL** – free Yahoo/Polygon feeds → Parquet → DuckDB.
+* **Market Data ETL** – free Yahoo/Polygon feeds → Parquet → ClickHouse.
 * **Analytics Core** – GARCH(1,1) & EGARCH, IV surface fit, greeks via pybind11-wrapped C++.
 * **Back-tester** – vectorised daily/1-min event engine, portfolio P&L with margin/haircuts.
 * **Execution Layer** – C++ FIX gateway (Fix8) with risk guards, optional Alpaca paper trading.
@@ -36,6 +36,6 @@ If you like solving tough engineering problems **and** debating why a straddle b
 ```bash
 git clone https://github.com/cearps/alphamatrix.git
 cd alphamatrix
-make dev            # spins up DB, API, React, and a sample strategy in Docker
+make dev            # spins up ClickHouse, API, React, and a sample strategy in Docker
 open http://localhost:3000   # dashboard
 ```
