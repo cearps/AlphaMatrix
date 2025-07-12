@@ -1,0 +1,21 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.6
+    ports: ["8123:8123", "9000:9000"]
+    env_file: .env
+    volumes:
+      - ./clickhouse/data:/var/lib/clickhouse
+      - ./migrations:/docker-entrypoint-initdb.d
+
+  flyway:
+    image: flyway/flyway:11.10
+    command: -url=jdbc:clickhouse://clickhouse:8123?compress=0 -user=${CLICKHOUSE_USER} -password=${CLICKHOUSE_PASSWORD} migrate
+    depends_on: [clickhouse]
+    environment:
+      FLYWAY_LOCATIONS: filesystem:/flyway/migrations
+    volumes:
+      - ./migrations:/flyway/migrations:ro
+      - ./drivers:/flyway/drivers:ro
+
+volumes:
+  clickhouse_data:
