@@ -5,12 +5,13 @@ services:
     env_file: .env
     volumes:
       - ./clickhouse/data:/var/lib/clickhouse
-      - ./migrations:/docker-entrypoint-initdb.d
 
   flyway:
     image: flyway/flyway:11.10
     command: -url=jdbc:clickhouse://clickhouse:8123?compress=0 -user=${CLICKHOUSE_USER} -password=${CLICKHOUSE_PASSWORD} migrate
-    depends_on: [clickhouse]
+    depends_on:
+      clickhouse:
+        condition: service_started
     environment:
       FLYWAY_LOCATIONS: filesystem:/flyway/migrations
     volumes:
