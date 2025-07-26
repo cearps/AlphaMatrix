@@ -1,4 +1,4 @@
-# nsure-Maven.ps1  – run as admin once per machine - useful script to ensure Maven is installed
+# Ensure-Maven.ps1  – run as admin once per machine - useful script to ensure Maven is installed
 param([string]$Required = "3.9.10")
 
 # 1) quick probe
