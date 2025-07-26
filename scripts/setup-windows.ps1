@@ -88,20 +88,18 @@ if (-not $SkipDatabase) {
         # Prompt for password
         do {
             $password = Read-Host "Enter password for ClickHouse database" -AsSecureString
-            $passwordPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
-            if ([string]::IsNullOrWhiteSpace($passwordPlain)) {
+            if ([string]::IsNullOrWhiteSpace([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)))) {
                 Write-Host "❌ Password cannot be empty. Please try again." -ForegroundColor Red
             }
-        } while ([string]::IsNullOrWhiteSpace($passwordPlain))
+        } while ([string]::IsNullOrWhiteSpace([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))))
         
         # Confirm password
         do {
             $confirmPassword = Read-Host "Confirm password" -AsSecureString
-            $confirmPasswordPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmPassword))
-            if ($passwordPlain -ne $confirmPasswordPlain) {
+            if ([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)) -ne [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmPassword))) {
                 Write-Host "❌ Passwords do not match. Please try again." -ForegroundColor Red
             }
-        } while ($passwordPlain -ne $confirmPasswordPlain)
+        } while ([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)) -ne [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmPassword)))
         
         Write-Host "Creating .env file with your credentials..." -ForegroundColor Cyan
         @"
