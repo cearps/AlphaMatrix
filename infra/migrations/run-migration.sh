@@ -45,7 +45,7 @@ done < "$ENV_FILE"
 export FLYWAY_USER="$CH_USER"
 export FLYWAY_PASSWORD="$CH_PASSWORD"
 
-echo -e "${YELLOW}🔑 Using credentials: $FLYWAY_USER / ${FLYWAY_PASSWORD:0:3}***${NC}"
+echo -e "${YELLOW}🔑 Using credentials from .env file${NC}"
 
 # Run Flyway migration
 echo -e "${YELLOW}🚀 Running Flyway migration...${NC}"
