@@ -88,24 +88,22 @@ if (-not $SkipDatabase) {
         # Prompt for password
         do {
             $password = Read-Host "Enter password for ClickHouse database" -AsSecureString
-            if ([string]::IsNullOrWhiteSpace([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)))) {
+            $passwordPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+            if ([string]::IsNullOrWhiteSpace($passwordPlain)) {
                 Write-Host "❌ Password cannot be empty. Please try again." -ForegroundColor Red
             }
-        } while ([string]::IsNullOrWhiteSpace([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))))
+        } while ([string]::IsNullOrWhiteSpace($passwordPlain))
         
         # Confirm password
         do {
             $confirmPassword = Read-Host "Confirm password" -AsSecureString
-            if ([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)) -ne [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmPassword))) {
+            $confirmPasswordPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmPassword))
+            if ($passwordPlain -ne $confirmPasswordPlain) {
                 Write-Host "❌ Passwords do not match. Please try again." -ForegroundColor Red
             }
-        } while ([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)) -ne [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmPassword)))
+        } while ($passwordPlain -ne $confirmPasswordPlain)
         
         Write-Host "Creating .env file with your credentials..." -ForegroundColor Cyan
-        
-        # Encrypt the password
-        $securePassword = ConvertTo-SecureString -String $passwordPlain -AsPlainText -Force
-        $encryptedPassword = ConvertFrom-SecureString -SecureString $securePassword
         
         @"
 ###############################################################################
@@ -113,7 +111,7 @@ if (-not $SkipDatabase) {
 ###############################################################################
 CLICKHOUSE_DB=alpha
 CH_USER=$username
-CH_PASSWORD=$encryptedPassword
+CH_PASSWORD=$passwordPlain
 
 # The official image maps CH_* onto its own vars, but we set both explicitly
 CLICKHOUSE_USER=${CH_USER}
