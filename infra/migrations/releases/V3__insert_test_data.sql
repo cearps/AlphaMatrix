@@ -10,10 +10,10 @@ VALUES
     ('TEST_GOOGL', 'NASDAQ', '2025-01-02 09:30:00', 140.25, 141.10, 139.80, 140.95, 25000000, 140.95);
 
 -- Insert sample corporate actions (using TEST_ prefix)
-INSERT INTO alpha.corporate_actions (symbol, action_type, action_date, ex_date, amount, description)
+INSERT INTO alpha.corporate_actions (symbol, action_type, action_date, ex_date, amount, ratio, description)
 VALUES 
-    ('TEST_AAPL', 'dividend', '2025-02-15', '2025-02-12', 0.24, 'TEST: Quarterly dividend payment'),
-    ('TEST_TSLA', 'split', '2025-08-25', '2025-08-24', 0.00, 'TEST: 3:1 stock split');
+    ('TEST_AAPL', 'dividend', '2025-02-15', '2025-02-12', 0.24, NULL, 'TEST: Quarterly dividend payment'),
+    ('TEST_TSLA', 'split', '2025-08-25', '2025-08-24', NULL, '3:1', 'TEST: 3:1 stock split');
 
 -- Insert sample index data (using TEST_ prefix)
 INSERT INTO alpha.index_data (index_symbol, timestamp, open, high, low, close, volume)
