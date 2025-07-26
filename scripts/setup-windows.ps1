@@ -102,13 +102,18 @@ if (-not $SkipDatabase) {
         } while ([Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)) -ne [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmPassword)))
         
         Write-Host "Creating .env file with your credentials..." -ForegroundColor Cyan
+        
+        # Encrypt the password
+        $securePassword = ConvertTo-SecureString -String $passwordPlain -AsPlainText -Force
+        $encryptedPassword = ConvertFrom-SecureString -SecureString $securePassword
+        
         @"
 ###############################################################################
 # ClickHouse bootstrap -- container reads these on first start-up
 ###############################################################################
 CLICKHOUSE_DB=alpha
 CH_USER=$username
-CH_PASSWORD=$passwordPlain
+CH_PASSWORD=$encryptedPassword
 
 # The official image maps CH_* onto its own vars, but we set both explicitly
 CLICKHOUSE_USER=${CH_USER}
