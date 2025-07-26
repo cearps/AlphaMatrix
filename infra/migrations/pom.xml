@@ -1,0 +1,58 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.alphamatrix</groupId>
+  <artifactId>db-migrations</artifactId>
+  <version>1.0.0</version>
+
+  <properties>
+    <!-- Flyway core -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>17</java.version>
+  </properties>
+
+  <dependencies>
+    <!-- ClickHouse adapter – note the *version* element -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-clickhouse</artifactId>
+      <version>10.22.0</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Shaded JDBC driver -->
+    <dependency>
+      <groupId>com.clickhouse</groupId>
+      <artifactId>clickhouse-jdbc</artifactId>
+      <classifier>all</classifier>
+      <version>0.8.6</version>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>10.22.0</version>
+        <configuration>
+          <locations>
+            <location>filesystem:releases</location>
+          </locations>
+          <baselineOnMigrate>true</baselineOnMigrate>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>local</id>
+      <properties>
+        <flyway.url>jdbc:clickhouse://localhost:8123/alpha</flyway.url>
+        <flyway.user>${env.FLYWAY_USER}</flyway.user>
+        <flyway.password>${env.FLYWAY_PASSWORD}</flyway.password>
+      </properties>
+    </profile>
+  </profiles>
+</project>

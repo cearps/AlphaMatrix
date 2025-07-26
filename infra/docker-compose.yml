@@ -4,19 +4,7 @@ services:
     ports: ["8123:8123", "9000:9000"]
     env_file: .env
     volumes:
-      - ./clickhouse/data:/var/lib/clickhouse
-
-  flyway:
-    image: flyway/flyway:11.10
-    command: -url=jdbc:clickhouse://clickhouse:8123?compress=0 -user=${CLICKHOUSE_USER} -password=${CLICKHOUSE_PASSWORD} migrate
-    depends_on:
-      clickhouse:
-        condition: service_started
-    environment:
-      FLYWAY_LOCATIONS: filesystem:/flyway/migrations
-    volumes:
-      - ./migrations:/flyway/migrations:ro
-      - ./drivers:/flyway/drivers:ro
+      - clickhouse_data:/var/lib/clickhouse
 
 volumes:
   clickhouse_data:
