@@ -71,8 +71,30 @@ install_dependencies() {
         brew install openjdk@17 maven docker
         
         # Set up Java PATH
-        echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
-        source ~/.zshrc
+        # Detect Homebrew prefix dynamically
+        HOMEBREW_PREFIX=$(brew --prefix)
+        
+        # Detect user's shell and update the appropriate configuration file
+        case "$SHELL" in
+            */zsh)
+                CONFIG_FILE=~/.zshrc
+                ;;
+            */bash)
+                CONFIG_FILE=~/.bashrc
+                ;;
+            */fish)
+                CONFIG_FILE=~/.config/fish/config.fish
+                ;;
+            *)
+                print_warning "Unsupported shell: $SHELL. Please update your PATH manually."
+                CONFIG_FILE=""
+                ;;
+        esac
+        
+        if [[ -n "$CONFIG_FILE" ]]; then
+            echo "export PATH=\"$HOMEBREW_PREFIX/opt/openjdk@17/bin:\$PATH\"" >> "$CONFIG_FILE"
+            source "$CONFIG_FILE"
+        fi
         
     elif [[ "$OS" == "linux" ]]; then
         if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
