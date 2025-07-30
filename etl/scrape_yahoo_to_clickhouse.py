@@ -3,13 +3,25 @@ import pandas as pd
 from clickhouse_connect import get_client
 from datetime import datetime
 import os
+from pathlib import Path
 
-# Configuration (could be moved to env/config file)
+try:
+    from dotenv import load_dotenv
+    DOTENV_AVAILABLE = True
+except ImportError:
+    DOTENV_AVAILABLE = False
+
+# Load .env from infra if available
+infra_env_path = Path(__file__).parent.parent / 'infra' / '.env'
+if DOTENV_AVAILABLE and infra_env_path.exists():
+    load_dotenv(dotenv_path=infra_env_path)
+
+# Prefer ClickHouse config from .env, fallback to environment
 CLICKHOUSE_HOST = os.getenv('CLICKHOUSE_HOST', 'localhost')
 CLICKHOUSE_PORT = int(os.getenv('CLICKHOUSE_PORT', 8123))
-CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER', 'default')
-CLICKHOUSE_PASSWORD = os.getenv('CLICKHOUSE_PASSWORD', '')
-CLICKHOUSE_DB = 'alpha'
+CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER') or os.getenv('CH_USER', 'default')
+CLICKHOUSE_PASSWORD = os.getenv('CLICKHOUSE_PASSWORD') or os.getenv('CH_PASSWORD', '')
+CLICKHOUSE_DB = os.getenv('CLICKHOUSE_DB', 'alpha')
 CLICKHOUSE_TABLE = 'equity_prices'
 
 # Example: List of tickers to fetch
