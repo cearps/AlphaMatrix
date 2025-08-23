@@ -72,12 +72,12 @@ conda install pandas python-dotenv -y
 pip install -e ./etl
 
 # Run ETL jobs
-python -m etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d
-python -m etl.jobs.incremental_ohlcv --symbol AAPL --interval 1d --lookback-days 5
+python -m etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d --dry-run
+python -m etl.jobs.incremental_ohlcv --symbol AAPL --interval 1d --lookback-days 5 --dry-run
 
 # Docker (from repo root)
-docker build -f infra/etl/Dockerfile -t alphamatrix-etl-skel .
-docker run --rm -v "$(pwd)/infra/.env:/app/infra/.env:ro" alphamatrix-etl-skel python -m etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d
+docker build -f infra/etl/Dockerfile -t alphamatrix-etl .
+docker run --rm -v "$(pwd)/infra/.env:/app/infra/.env:ro" alphamatrix-etl python -m etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d --dry-run
 ```
 
 ### **ETL File Organization**

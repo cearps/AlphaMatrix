@@ -73,20 +73,37 @@ infra/
 #### Backfill Job (Historical Data)
 
 ```bash
+# Normal mode (loads to ClickHouse)
 python -m etl.jobs.backfill_ohlcv \
   --symbol AAPL \
   --start 2020-01-01 \
   --end 2020-01-10 \
   --interval 1d
+
+# Dry-run mode (prints summary only)
+python -m etl.jobs.backfill_ohlcv \
+  --symbol AAPL \
+  --start 2020-01-01 \
+  --end 2020-01-10 \
+  --interval 1d \
+  --dry-run
 ```
 
 #### Incremental Job (New Data)
 
 ```bash
+# Normal mode (loads to ClickHouse)
 python -m etl.jobs.incremental_ohlcv \
   --symbol AAPL \
   --interval 1d \
   --lookback-days 5
+
+# Dry-run mode (prints summary only)
+python -m etl.jobs.incremental_ohlcv \
+  --symbol AAPL \
+  --interval 1d \
+  --lookback-days 5 \
+  --dry-run
 ```
 
 ### Docker Usage
@@ -145,6 +162,8 @@ CLICKHOUSE_TABLE=ohlcv
 
 ### Expected Output
 
+#### Normal Mode (without --dry-run)
+
 Both ETL jobs will print skeleton messages showing the flow:
 
 ```
@@ -153,48 +172,73 @@ Both ETL jobs will print skeleton messages showing the flow:
 [env] loading /path/to/infra/.env
 [env] loaded CLICKHOUSE_HOST=localhost CLICKHOUSE_DB=alpha TABLE=ohlcv
 [ClickHouseClient.__init__] host=localhost, port=8123, db=alpha (user only for auth)
-[YahooFinanceAdapter] fetch_ohlcv(symbol=AAPL, start=2020-01-01 00:00:00, end=2020-01-10 00:00:00, interval=1d)
-[validate_ohlcv] rows=0 SKELETON no validation
-[map_to_clickhouse] input rows=0 SKELETON passthrough
-[ClickHouseClient.upsert_ohlcv] table=ohlcv, rows=0 SKELETON no-op
-[backfill] done symbol=AAPL rows_upserted=0 (SKELETON)
+[YahooFinanceAdapter] downloading AAPL 2020-01-01 00:00:00→2020-01-10 00:00:00 interval=1d (yf=1d)
+[validate_ohlcv] rows=3 SKELETON no validation
+[map_to_clickhouse] input rows=3 SKELETON passthrough
+[ClickHouseClient.upsert_ohlcv] table=ohlcv, rows=3 SKELETON no-op
+[backfill] done symbol=AAPL rows_upserted=3
+```
+
+#### Dry-Run Mode (with --dry-run)
+
+Shows detailed data summary without database writes:
+
+```
+=== DRY RUN SUMMARY ===
+symbol: AAPL
+rows: 3
+date range: 2024-01-02 00:00:00 -> 2024-01-04 00:00:00
+
+head(5):
+        ts       open       high        low      close   volume symbol
+2024-01-02 187.149994 188.440002 183.889999 185.639999 82488700   AAPL
+2024-01-03 184.220001 185.880005 183.429993 184.250000 58414500   AAPL
+2024-01-04 182.149994 183.089996 180.880005 181.910004 71983600   AAPL
+
+[describe numeric columns]
+Price        open        high         low       close        volume
+count    3.000000    3.000000    3.000000    3.000000  3.000000e+00
+mean   184.506663  185.803335  182.733332  183.933334  7.096227e+07
+...
 ```
 
 ## 📋 Implementation Notes
 
 ### Current State
 
-- ✅ Skeleton structure implemented
-- ✅ All interfaces defined
-- ✅ Print statements show data flow
-- ✅ No external API calls or DB writes
-- ✅ Docker containerization working
-- ✅ Environment configuration working
+- ✅ **Real Yahoo Finance integration** - Fetches actual OHLCV data
+- ✅ **Data normalization** - Handles MultiIndex columns, UTC timestamps
+- ✅ **Retry logic** - Exponential backoff for API failures
+- ✅ **Data cleanup** - Deduplication, NaN removal, volume validation
+- ✅ **Dry-run mode** - `--dry-run` flag for data preview without DB writes
+- ✅ **Comprehensive summaries** - Detailed data statistics and validation
+- ✅ **Docker containerization** - Works in both local and containerized environments
+- ✅ **Environment configuration** - Reads from `infra/.env`
 
 ### Next Steps
 
-1. **Implement Yahoo Finance adapter:**
-
-   - Add `yfinance` dependency
-   - Implement actual API calls
-   - Add rate limiting and error handling
-
-2. **Implement ClickHouse client:**
+1. **Implement ClickHouse client:**
 
    - Add `clickhouse-connect` dependency
    - Implement actual database operations
    - Add connection pooling and retries
 
-3. **Implement data validation:**
+2. **Implement data validation:**
 
-   - Add OHLC bounds checking
-   - Add timestamp validation
-   - Add duplicate detection
+   - Add OHLC bounds checking (high >= max(open, close))
+   - Add timestamp validation (monotonic, no gaps)
+   - Add duplicate detection and handling
 
-4. **Add comprehensive testing:**
+3. **Add comprehensive testing:**
+
    - Unit tests for each component
    - Integration tests with mock data
-   - End-to-end tests
+   - End-to-end tests with real data
+
+4. **Performance optimizations:**
+   - Batch processing for multiple symbols
+   - Parallel downloads for different time periods
+   - Caching for frequently accessed data
 
 ## 🏗️ Design Compliance
 

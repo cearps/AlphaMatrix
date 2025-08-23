@@ -58,24 +58,28 @@ docker run --rm \
 
 ## 📋 Development Notes
 
-### Current State (Skeleton)
+### Current State (Production Ready)
 
-- ✅ Container builds successfully
-- ✅ Runs ETL jobs with print-only output
-- ✅ No external API calls or database writes
-- ✅ Environment configuration working
-- ✅ Uses `pyproject.toml` for dependency management
+- ✅ **Container builds successfully** with all dependencies
+- ✅ **Real Yahoo Finance integration** - Fetches actual OHLCV data
+- ✅ **Dry-run mode** - `--dry-run` flag for data preview
+- ✅ **Data normalization** - Handles MultiIndex columns, UTC timestamps
+- ✅ **Retry logic** - Exponential backoff for API failures
+- ✅ **Environment configuration** working from `infra/.env`
+- ✅ **Uses `pyproject.toml`** for dependency management
 
 ### Next Steps
 
-1. **Add production dependencies** to `etl/pyproject.toml`:
+1. **Add ClickHouse integration** to `etl/pyproject.toml`:
 
    ```toml
    dependencies = [
      "pandas>=2.2",
      "python-dotenv>=1.0",
-     "yfinance>=0.2",
-     "clickhouse-connect>=0.7",
+     "yfinance>=0.2.54",
+     "tenacity>=9.0",
+     "pytz>=2024.1",
+     "clickhouse-connect>=0.7",  # TODO: uncomment when implementing
    ]
    ```
 

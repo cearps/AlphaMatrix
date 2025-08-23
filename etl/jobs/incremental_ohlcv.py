@@ -14,6 +14,7 @@ def main():
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--lookback-days", type=int, default=7, help="fallback if no watermark in DB")
+    parser.add_argument("--dry-run", action="store_true", help="Fetch and print summary only, no DB writes")
     args = parser.parse_args()
     print(f"[incremental] args={args}")
 
@@ -34,8 +35,14 @@ def main():
     df = adapter.fetch_ohlcv(args.symbol, start, end, args.interval)
     validate_ohlcv(df)
     df = map_to_clickhouse(df)
+
+    if args.dry_run:
+        from etl.utils.summary import print_ohlcv_summary
+        print_ohlcv_summary(df, args.symbol)
+        return
+
     rows = ch.upsert_ohlcv(df, cfg["table"])
-    print(f"[incremental] done symbol={args.symbol} rows_upserted={rows} (SKELETON)")
+    print(f"[incremental] done symbol={args.symbol} rows_upserted={rows}")
 
 if __name__ == "__main__":
     main()

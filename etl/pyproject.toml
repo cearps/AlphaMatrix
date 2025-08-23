@@ -6,8 +6,10 @@ requires-python = ">=3.11"
 dependencies = [
   "pandas>=2.2",
   "python-dotenv>=1.0",
+  "yfinance>=0.2.54",
+  "tenacity>=9.0",
+  "pytz>=2024.1",
   # "clickhouse-connect>=0.7",   # TODO: uncomment when implementing
-  # "yfinance>=0.2",             # TODO: uncomment when implementing
 ]
 
 [tool.setuptools.packages.find]
