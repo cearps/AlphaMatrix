@@ -138,3 +138,10 @@ This focused strategy powers our first CLI, API, and UI demos—keeping scope ti
 5. **Merge** – green CI + one maintainer approval.
 
 _Full guidelines live in [`CONTRIBUTING.md`](CONTRIBUTING.md)._
+
+## 10  Disclaimers
+
+1. **Not financial advice**:  All information, code, and examples provided in this repository are for demonstration and educational purposes only. They should not be interpreted as investment, trading, or financial advice.
+2. **No Ownership of Third-Party Research/Data**:  Any referenced market data, research, or external content remains the property of its respective owners. This repository does not claim authorship or rights to such materials.
+3. **Educational Use Only**: The code and documentation are intended solely to illustrate technical concepts in quantitative finance and data processing. They are not intended for live trading or commercial deployment without independent review and validation.
+4.  **Exercise Answers Not Guaranteed Correct**: Any solutions provided to exercises are based on the author’s understanding at the time of writing. They may contain errors and should not be relied upon as authoritative answers without independent verification.
