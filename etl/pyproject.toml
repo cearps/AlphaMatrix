@@ -1,0 +1,14 @@
+[project]
+name = "alphamatrix-etl"
+version = "0.0.0"
+description = "Skeleton ETL for OHLCV -> ClickHouse (design-first)"
+requires-python = ">=3.11"
+dependencies = [
+  "pandas>=2.2",
+  "python-dotenv>=1.0",
+  # "clickhouse-connect>=0.7",   # TODO: uncomment when implementing
+  # "yfinance>=0.2",             # TODO: uncomment when implementing
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
