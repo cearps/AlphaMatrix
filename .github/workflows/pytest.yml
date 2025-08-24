@@ -1,8 +1,6 @@
 name: alphamatrix-tests
 
 on:
-  push:
-    paths: ["python/**", "infra/**", ".github/workflows/**"]
   pull_request:
     paths: ["python/**", "infra/**", ".github/workflows/**"]
 
