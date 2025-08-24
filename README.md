@@ -48,56 +48,81 @@ AlphaMatrix stitches together fast C++ analytics, flexible Python APIs and a mod
 
 ## 4  Module Details
 
-| Dir        | Responsibility                                            | Key Tech                                        |
-| ---------- | --------------------------------------------------------- | ----------------------------------------------- |
-| `core/`    | Back‑test engine, analytics libs, C++ greeks via pybind11 | C++20, Python 3.12                              |
-| `api/`     | FastAPI app, auth, orchestration of runs                  | FastAPI, Pydantic, Alembic                      |
-| `web/`     | Front‑end dashboard & wizard                              | React 19, Vite, shadcn/ui, Recharts             |
-| `scripts/` | One‑off ETL, benchmarks, dev helpers                      | Python CLI, Rich                                |
-| `ci/`      | GitHub Actions workflows, lint, latency tests             | actions‑python, clang‑tidy, pytest‑benchmark    |
-| `infra/`   | Docker Compose, k8s Helm charts                           | ClickHouse, Postgres, Grafana                   |
-| `etl/`     | **ETL Pipeline** - Yahoo Finance → ClickHouse             | Python, pandas, yfinance, clickhouse-connect ✅ |
+| Dir                   | Responsibility                                            | Key Tech                                                 |
+| --------------------- | --------------------------------------------------------- | -------------------------------------------------------- |
+| `core/`               | Back‑test engine, analytics libs, C++ greeks via pybind11 | C++20, Python 3.12                                       |
+| `api/`                | FastAPI app, auth, orchestration of runs                  | FastAPI, Pydantic, Alembic                               |
+| `web/`                | Front‑end dashboard & wizard                              | React 19, Vite, shadcn/ui, Recharts                      |
+| `scripts/`            | One‑off ETL, benchmarks, dev helpers                      | Python CLI, Rich                                         |
+| `ci/`                 | GitHub Actions workflows, lint, latency tests             | actions‑python, clang‑tidy, pytest‑benchmark             |
+| `infra/`              | Docker Compose, k8s Helm charts                           | ClickHouse, Postgres, Grafana                            |
+| `python/alphamatrix/` | **Shared Package** - ETL + API modules                    | Python, pandas, yfinance, clickhouse-connect, FastAPI ✅ |
+
+> **Note:** API and ETL now live in a shared Python package at `python/alphamatrix/` to enable shared models/utilities. Dockerfiles remain in `infra/`, and secrets are read from `infra/.env` at runtime via volume mounts.
 
 ---
 
-## 4.1 ETL System
+## 4.1 ETL + API System
 
-The ETL system provides data ingestion from Yahoo Finance to ClickHouse for backtesting.
+The ETL system provides data ingestion from Yahoo Finance to ClickHouse, and the API service provides REST endpoints for data queries and job management.
 
-### **Quick Start (ETL)**
+### **Quick Start (ETL + API)**
 
 ```bash
 # Install dependencies
-conda install pandas python-dotenv -y
-pip install -e ./etl
+pip install -e ./python[test]
 
 # Run ETL jobs
-python -m etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d --dry-run
-python -m etl.jobs.incremental_ohlcv --symbol AAPL --interval 1d --lookback-days 5 --dry-run
+python -m alphamatrix.etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d --dry-run
+python -m alphamatrix.etl.jobs.incremental_ohlcv --symbol AAPL --interval 1d --lookback-days 5 --dry-run
+
+# Run API service
+uvicorn alphamatrix.api.app:app --host 0.0.0.0 --port 8000
 
 # Docker (from repo root)
-docker build -f infra/etl/Dockerfile -t alphamatrix-etl .
-docker run --rm -v "$(pwd)/infra/.env:/app/infra/.env:ro" alphamatrix-etl python -m etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d --dry-run
+docker build -f infra/Dockerfile.etl -t alphamatrix-etl .
+docker run --rm -v "$(pwd)/infra/.env:/app/infra/.env:ro" alphamatrix-etl python -m alphamatrix.etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d --dry-run
+
+docker build -f infra/Dockerfile.api -t alphamatrix-api .
+docker run --rm -p 8000:8000 -v "$(pwd)/infra/.env:/app/infra/.env:ro" alphamatrix-api
 ```
 
-### **ETL File Organization**
+### **Package Organization**
 
 ```
-etl/                    # Core ETL package
-├── adapters/          # Data source adapters (Yahoo Finance, etc.)
-├── io/               # ClickHouse client
-├── transforms/       # Data validation & mapping
-├── jobs/             # ETL job runners
-└── utils/            # Environment & logging
+python/alphamatrix/           # Shared Python package
+├── etl/                     # ETL modules
+│   ├── adapters/           # Data source adapters (Yahoo Finance, etc.)
+│   ├── io/                # ClickHouse client
+│   ├── transforms/        # Data validation & mapping
+│   ├── jobs/              # ETL job runners
+│   ├── utils/             # Environment & logging
+│   └── tests/             # ETL test suite
+│       ├── integration/   # Integration tests
+│       └── conftest.py    # Test fixtures
+└── api/                    # FastAPI service
+    ├── models/            # Pydantic request/response models
+    ├── routers/           # API endpoints
+    ├── jobrunner.py       # In-process job queue
+    └── config.py          # Configuration management
 
-infra/etl/            # ETL infrastructure
-└── Dockerfile        # ETL container
-
-docs/
-└── etl-ohlcv-yahoo-clickhouse.md  # Complete ETL design
+infra/                      # Infrastructure
+├── Dockerfile.etl         # ETL container
+├── Dockerfile.api         # API container
+└── .env                   # Environment configuration (not in repo)
 ```
 
-**📖 Full ETL Documentation:** See [`etl/README.md`](etl/README.md) for detailed usage and development guide.
+**📖 Full Documentation:** See [`python/alphamatrix/api/README.md`](python/alphamatrix/api/README.md) for detailed API usage and development guide.
+
+### **Testing Structure**
+
+Tests are co-located with their respective modules:
+
+- **API tests**: `python/alphamatrix/api/tests/` - Unit tests for FastAPI endpoints
+- **ETL tests**: `python/alphamatrix/etl/tests/` - Unit tests for ETL modules
+- **Common utilities**: `python/alphamatrix/common/` - Shared logging, environment, and ID generation
+
+**Environment Configuration**: All modules read from `infra/.env` via `alphamatrix.common.env` functions.
 
 ---
 
