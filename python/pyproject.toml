@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alphamatrix"
+version = "0.1.0"
+description = "AlphaMatrix ETL + API (shared package)"
+authors = [
+    {name = "AlphaMatrix Team"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["finance", "etl", "api", "clickhouse", "trading"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pandas>=2.2",
+    "python-dotenv>=1.0",
+    "yfinance>=0.2.54",
+    "tenacity>=9.0",
+    "pytz>=2024.1",
+    "clickhouse-connect>=0.7.18",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "freezegun>=1.5",
+    "requests>=2.31.0",
+]
+
+dev = [
+    "black>=24.0",
+    "isort>=5.13",
+    "flake8>=7.0",
+    "mypy>=1.8",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers --disable-warnings --cov=alphamatrix --cov-report=term-missing"
+testpaths = ["alphamatrix/etl/tests"]
+markers = [
+    "unit: fast, no network, no DB",
+    "integration: opt-in; may use local resources like ClickHouse",
+    "e2e: slow end-to-end",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
