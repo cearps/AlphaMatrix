@@ -25,7 +25,8 @@ test = [
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra -q --strict-markers --disable-warnings --cov=etl --cov-report=term-missing"
-testpaths = ["etl/tests"]
+testpaths = ["tests"]
+pythonpath = ["."]
 
 markers = [
   "unit: fast, no network, no DB",

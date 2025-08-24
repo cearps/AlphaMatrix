@@ -19,4 +19,4 @@ jobs:
           pip install -e ./etl[test]
       - name: Run unit tests
         run: |
-          pytest etl/tests --maxfail=1
+          python -m pytest etl/tests/ -m "unit" --maxfail=1 -v
