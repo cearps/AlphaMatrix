@@ -1,11 +1,7 @@
 name: etl-api-tests
 
 on:
-  push:
-    paths:
-      - "python/**"
-      - "infra/**"
-  pull_request:
+  pull_request: # Run tests on every PR - do not run on push as this will quickly exhaust the GitHub Actions minutes
     paths:
       - "python/**"
       - "infra/**"
