@@ -2,14 +2,15 @@ import argparse
 from datetime import datetime, timedelta
 
 from etl.adapters.yahoo_finance_adapter import YahooFinanceAdapter
-from etl.transforms.ohlcv_mapper import map_to_clickhouse
+from etl.transforms.ohlcv_mapper import map_yfinance_to_ohlcv
 from etl.transforms.validators import validate_ohlcv
 from etl.utils.env import load_clickhouse_env
-from etl.utils.logging import init_logging
+from etl.utils.logging import init_logging, get_logger
 from etl.io.clickhouse_client import ClickHouseClient
 
 def main():
     init_logging()
+    logger = get_logger(__name__)
     parser = argparse.ArgumentParser(description="Incremental OHLCV (SKELETON)")
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--interval", default="1d")
@@ -17,12 +18,12 @@ def main():
     parser.add_argument("--exchange", default=None, help="Exchange identifier (overrides DEFAULT_EXCHANGE from .env, e.g., NASDAQ, ASX)")
     parser.add_argument("--dry-run", action="store_true", help="Fetch and print summary only, no DB writes")
     args = parser.parse_args()
-    print(f"[incremental] args={args}")
+    logger.info(f"args={args}")
 
     # For dry-run mode, use lookback days directly
     if args.dry_run:
         start = datetime.utcnow() - timedelta(days=args.lookback_days)
-        print(f"[incremental] dry-run mode; using start={start.isoformat()}")
+        logger.info(f"dry-run mode; using start={start.isoformat()}")
     else:
         # Load ClickHouse client to get latest timestamp
         cfg = load_clickhouse_env()
@@ -35,7 +36,7 @@ def main():
         last_ts = ch.latest_timestamp(args.symbol, cfg["table"], args.interval)
         if last_ts is None:
             start = datetime.utcnow() - timedelta(days=args.lookback_days)
-            print(f"[incremental] no watermark; using start={start.isoformat()}")
+            logger.info(f"no watermark; using start={start.isoformat()}")
         else:
             # Convert ClickHouse timestamp to datetime
             if isinstance(last_ts, str):
@@ -47,16 +48,16 @@ def main():
             epoch_start = datetime(1970, 1, 1)
             if start <= epoch_start or start < datetime.utcnow() - timedelta(days=args.lookback_days * 2):
                 start = datetime.utcnow() - timedelta(days=args.lookback_days)
-                print(f"[incremental] watermark too old; using lookback start={start.isoformat()}")
+                logger.info(f"watermark too old; using start={start.isoformat()}")
             else:
-                print(f"[incremental] watermark found; start={start.isoformat()}")
+                logger.info(f"watermark found; start={start.isoformat()}")
 
     end = datetime.utcnow()
 
     adapter = YahooFinanceAdapter()
-    df = adapter.fetch_ohlcv(args.symbol, start, end, args.interval)
+    raw = adapter.fetch_ohlcv(args.symbol, start, end, args.interval)
+    df = map_yfinance_to_ohlcv(raw, args.symbol)
     validate_ohlcv(df)
-    df = map_to_clickhouse(df)
 
     if args.dry_run:
         from etl.utils.summary import print_ohlcv_summary
@@ -77,7 +78,7 @@ def main():
         ingest_run_id=run_id,
         exchange_default=exchange
     )
-    print(f"[incremental] committed rows={inserted} to {cfg['database']}.{cfg['table']} (exchange={exchange}, run_id={run_id})")
+    logger.info(f"committed rows={inserted} to {cfg['database']}.{cfg['table']} (exchange={exchange}, run_id={run_id})")
 
 if __name__ == "__main__":
     main()

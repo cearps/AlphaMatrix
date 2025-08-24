@@ -1,11 +1,14 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from etl.utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 def load_clickhouse_env():
     # Load from infra/.env (do not recreate)
     env_path = Path("infra/.env")
-    print(f"[env] loading {env_path.resolve()}")
+    logger.info(f"loading {env_path.resolve()}")
     load_dotenv(dotenv_path=env_path)
 
     cfg = {
@@ -22,5 +25,5 @@ def load_clickhouse_env():
         "secure": os.getenv("CLICKHOUSE_SECURE", "0") == "1",
         "protocol": os.getenv("CLICKHOUSE_PROTOCOL", "native"),  # 'native' or 'http'
     }
-    print(f"[env] CLICKHOUSE {cfg['host']}:{cfg['port']} db={cfg['database']} table={cfg['table']}")
+    logger.info(f"CLICKHOUSE {cfg['host']}:{cfg['port']} db={cfg['database']} table={cfg['table']}")
     return cfg

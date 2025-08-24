@@ -5,13 +5,16 @@ import uuid
 
 import pandas as pd
 import clickhouse_connect
+from etl.utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 class ClickHouseClient:
     def __init__(self, host: str, port: int, user: str, password: str, database: str,
                  protocol: str = "native", secure: bool = False,
                  async_insert: bool = True, wait_async: bool = True,
                  batch_size: int = 25000):
-        print(f"[ClickHouseClient] init host={host} port={port} db={database} protocol={protocol} secure={secure}")
+        logger.info(f"init host={host} port={port} db={database} protocol={protocol} secure={secure}")
         self.batch_size = int(batch_size)
         self.async_insert = async_insert
         self.wait_async = wait_async
@@ -31,10 +34,10 @@ class ClickHouseClient:
     def healthcheck(self) -> bool:
         try:
             pong = self.client.command("SELECT 1")
-            print(f"[ClickHouseClient.healthcheck] ok={pong == 1}")
+            logger.info(f"healthcheck ok={pong == 1}")
             return pong == 1
         except Exception as e:
-            print(f"[ClickHouseClient.healthcheck] fail: {e}")
+            logger.error(f"healthcheck fail: {e}")
             return False
 
     def latest_timestamp(self, symbol: str, table: str, interval: Optional[str] = None) -> Optional[str]:
@@ -46,10 +49,10 @@ class ClickHouseClient:
                 sql = f"SELECT max(timestamp) FROM {table} WHERE symbol=%(s)s"
                 res = self.client.query(sql, parameters={"s": symbol})
             val = res.result_rows[0][0] if res.result_rows else None
-            print(f"[latest_timestamp] symbol={symbol} interval={interval} -> {val}")
+            logger.info(f"latest_timestamp symbol={symbol} interval={interval} -> {val}")
             return val
         except Exception as e:
-            print(f"[latest_timestamp] error: {e}")
+            logger.error(f"latest_timestamp error: {e}")
             return None
 
     def upsert_ohlcv(
@@ -65,7 +68,7 @@ class ClickHouseClient:
         Assumes df columns: ts, open, high, low, close, volume, symbol, [optional adjusted_close]
         """
         if df is None or df.empty:
-            print("[upsert_ohlcv] empty df, nothing to insert")
+            logger.info("upsert_ohlcv empty df, nothing to insert")
             return 0
 
         # prepare rows as tuples in target column order; let version/created_at default
@@ -122,7 +125,7 @@ class ClickHouseClient:
                 settings=settings
             )
             inserted += len(batch)
-            print(f"[upsert_ohlcv] inserted batch {i}-{i+len(batch)-1} rows={len(batch)}")
+            logger.info(f"upsert_ohlcv inserted batch {i}-{i+len(batch)-1} rows={len(batch)}")
 
-        print(f"[upsert_ohlcv] total_inserted={inserted}")
+        logger.info(f"upsert_ohlcv total_inserted={inserted}")
         return inserted
