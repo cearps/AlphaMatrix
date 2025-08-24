@@ -2,7 +2,7 @@ import yfinance as yf
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from datetime import datetime
 import pandas as pd
-from alphamatrix.etl.utils.logging import get_logger
+from alphamatrix.common.logging import get_logger
 from .base_adapter import DataSourceAdapter
 
 logger = get_logger(__name__)

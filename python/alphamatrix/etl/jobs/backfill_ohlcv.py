@@ -5,8 +5,8 @@ import pandas as pd
 from alphamatrix.etl.adapters.yahoo_finance_adapter import YahooFinanceAdapter
 from alphamatrix.etl.transforms.ohlcv_mapper import map_yfinance_to_ohlcv
 from alphamatrix.etl.transforms.validators import validate_ohlcv
-from alphamatrix.etl.utils.env import load_clickhouse_env
-from alphamatrix.etl.utils.logging import init_logging, get_logger
+from alphamatrix.common.env import clickhouse_config
+from alphamatrix.common.logging import init_logging, get_logger
 from alphamatrix.etl.io.clickhouse_client import ClickHouseClient
 
 def main():
@@ -37,7 +37,7 @@ def main():
         return
 
     # load env + CH client (only when not in dry-run mode)
-    cfg = load_clickhouse_env()
+    cfg = clickhouse_config()
     ch = ClickHouseClient(
         host=cfg["host"], port=cfg["port"], user=cfg["user"], password=cfg["password"], database=cfg["database"],
         protocol=cfg["protocol"], secure=cfg["secure"], async_insert=cfg["async_insert"],

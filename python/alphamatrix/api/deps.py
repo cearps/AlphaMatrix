@@ -1,4 +1,4 @@
-import uuid
+from alphamatrix.common.ids import new_run_id
 from alphamatrix.etl.io.clickhouse_client import ClickHouseClient
 from alphamatrix.api.config import load_config
 
@@ -16,6 +16,3 @@ def get_clickhouse_client():
         wait_async=cfg["wait_async"], 
         batch_size=cfg["batch_size"]
     )
-
-def new_run_id() -> uuid.UUID:
-    return uuid.uuid4()

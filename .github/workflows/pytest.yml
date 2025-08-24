@@ -1,10 +1,10 @@
-name: etl-api-tests
+name: alphamatrix-tests
 
 on:
-  pull_request: # Run tests on every PR - do not run on push as this will quickly exhaust the GitHub Actions minutes
-    paths:
-      - "python/**"
-      - "infra/**"
+  push:
+    paths: ["python/**", "infra/**", ".github/workflows/**"]
+  pull_request:
+    paths: ["python/**", "infra/**", ".github/workflows/**"]
 
 jobs:
   test:
@@ -14,20 +14,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install package + test extras
+      - name: Install package + test deps
         run: |
           python -m pip install --upgrade pip
-          pip install ./python[test]
+          pip install /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/python[test]
       - name: Run unit tests
         run: |
           pytest -m "unit" --maxfail=1
-      - name: Run integration tests
-        run: |
-          pytest -m "integration" --maxfail=1
-        env:
-          CLICKHOUSE_HOST: localhost
-          CLICKHOUSE_PORT: 8123
-          CLICKHOUSE_USER: default
-          CLICKHOUSE_PASSWORD: ""
-          CLICKHOUSE_DB: alpha
-          CLICKHOUSE_TABLE: equity_prices

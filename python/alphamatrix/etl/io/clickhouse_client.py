@@ -5,7 +5,7 @@ import uuid
 
 import pandas as pd
 import clickhouse_connect
-from alphamatrix.etl.utils.logging import get_logger
+from alphamatrix.common.logging import get_logger
 
 logger = get_logger(__name__)
 

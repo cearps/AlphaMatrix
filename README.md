@@ -114,6 +114,16 @@ infra/                      # Infrastructure
 
 **📖 Full Documentation:** See [`python/alphamatrix/api/README.md`](python/alphamatrix/api/README.md) for detailed API usage and development guide.
 
+### **Testing Structure**
+
+Tests are co-located with their respective modules:
+
+- **API tests**: `python/alphamatrix/api/tests/` - Unit tests for FastAPI endpoints
+- **ETL tests**: `python/alphamatrix/etl/tests/` - Unit tests for ETL modules
+- **Common utilities**: `python/alphamatrix/common/` - Shared logging, environment, and ID generation
+
+**Environment Configuration**: All modules read from `infra/.env` via `alphamatrix.common.env` functions.
+
 ---
 
 ## 5  Tech Stack

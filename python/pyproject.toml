@@ -38,6 +38,7 @@ test = [
     "pytest-cov>=5.0",
     "freezegun>=1.5",
     "requests>=2.31.0",
+    "httpx>=0.24.0",
 ]
 
 dev = [
@@ -53,11 +54,18 @@ where = ["."]
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra -q --strict-markers --disable-warnings --cov=alphamatrix --cov-report=term-missing"
-testpaths = ["alphamatrix/etl/tests"]
+testpaths = [
+    "alphamatrix/etl/tests",
+    "alphamatrix/api/tests"
+]
 markers = [
     "unit: fast, no network, no DB",
     "integration: opt-in; may use local resources like ClickHouse",
     "e2e: slow end-to-end",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
 ]
 
 [tool.black]
