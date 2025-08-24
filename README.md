@@ -48,15 +48,15 @@ AlphaMatrix stitches together fast C++ analytics, flexible Python APIs and a mod
 
 ## 4  Module Details
 
-| Dir        | Responsibility                                            | Key Tech                                     |
-| ---------- | --------------------------------------------------------- | -------------------------------------------- |
-| `core/`    | Back‑test engine, analytics libs, C++ greeks via pybind11 | C++20, Python 3.12                           |
-| `api/`     | FastAPI app, auth, orchestration of runs                  | FastAPI, Pydantic, Alembic                   |
-| `web/`     | Front‑end dashboard & wizard                              | React 19, Vite, shadcn/ui, Recharts          |
-| `scripts/` | One‑off ETL, benchmarks, dev helpers                      | Python CLI, Rich                             |
-| `ci/`      | GitHub Actions workflows, lint, latency tests             | actions‑python, clang‑tidy, pytest‑benchmark |
-| `infra/`   | Docker Compose, k8s Helm charts                           | ClickHouse, Postgres, Grafana                |
-| `etl/`     | **ETL Pipeline** - Yahoo Finance → ClickHouse             | Python, pandas, yfinance, clickhouse-connect |
+| Dir        | Responsibility                                            | Key Tech                                        |
+| ---------- | --------------------------------------------------------- | ----------------------------------------------- |
+| `core/`    | Back‑test engine, analytics libs, C++ greeks via pybind11 | C++20, Python 3.12                              |
+| `api/`     | FastAPI app, auth, orchestration of runs                  | FastAPI, Pydantic, Alembic                      |
+| `web/`     | Front‑end dashboard & wizard                              | React 19, Vite, shadcn/ui, Recharts             |
+| `scripts/` | One‑off ETL, benchmarks, dev helpers                      | Python CLI, Rich                                |
+| `ci/`      | GitHub Actions workflows, lint, latency tests             | actions‑python, clang‑tidy, pytest‑benchmark    |
+| `infra/`   | Docker Compose, k8s Helm charts                           | ClickHouse, Postgres, Grafana                   |
+| `etl/`     | **ETL Pipeline** - Yahoo Finance → ClickHouse             | Python, pandas, yfinance, clickhouse-connect ✅ |
 
 ---
 

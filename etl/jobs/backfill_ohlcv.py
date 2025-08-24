@@ -16,13 +16,11 @@ def main():
     parser.add_argument("--start", required=True, help="YYYY-MM-DD")
     parser.add_argument("--end", required=True, help="YYYY-MM-DD")
     parser.add_argument("--interval", default="1d")
+    parser.add_argument("--exchange", default=None, help="Exchange identifier (overrides DEFAULT_EXCHANGE from .env, e.g., NASDAQ, ASX)")
     parser.add_argument("--dry-run", action="store_true", help="Fetch and print summary only, no DB writes")
     args = parser.parse_args()
 
     print(f"[backfill] args={args}")
-
-    cfg = load_clickhouse_env()
-    ch = ClickHouseClient(**{k: cfg[k] for k in ["host","port","user","password","database"]})
 
     adapter = YahooFinanceAdapter()
     start = datetime.fromisoformat(args.start)
@@ -37,8 +35,29 @@ def main():
         print_ohlcv_summary(df, args.symbol)
         return
 
-    rows = ch.upsert_ohlcv(df, cfg["table"])
-    print(f"[backfill] done symbol={args.symbol} rows_upserted={rows}")
+    # load env + CH client (only when not in dry-run mode)
+    cfg = load_clickhouse_env()
+    ch = ClickHouseClient(
+        host=cfg["host"], port=cfg["port"], user=cfg["user"], password=cfg["password"], database=cfg["database"],
+        protocol=cfg["protocol"], secure=cfg["secure"], async_insert=cfg["async_insert"],
+        wait_async=cfg["wait_async"], batch_size=cfg["batch_size"]
+    )
+
+    # one run id per job execution
+    import uuid
+    run_id = uuid.uuid4()
+    
+    exchange = args.exchange if args.exchange else cfg["exchange_default"]
+
+    inserted = ch.upsert_ohlcv(
+        df=df,
+        table=cfg["table"],
+        interval=args.interval,            # '1d', '1h', etc.
+        source="yahoo",
+        ingest_run_id=run_id,
+        exchange_default=exchange
+    )
+    print(f"[backfill] committed rows={inserted} to {cfg['database']}.{cfg['table']} (exchange={exchange}, run_id={run_id})")
 
 if __name__ == "__main__":
     main()

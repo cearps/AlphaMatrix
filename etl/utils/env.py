@@ -13,8 +13,14 @@ def load_clickhouse_env():
         "port": int(os.getenv("CLICKHOUSE_PORT", "8123")),
         "user": os.getenv("CLICKHOUSE_USER", "default"),
         "password": os.getenv("CLICKHOUSE_PASSWORD", ""),
-        "database": os.getenv("CLICKHOUSE_DB", "default"),
-        "table": os.getenv("CLICKHOUSE_TABLE", "ohlcv"),
+        "database": os.getenv("CLICKHOUSE_DB", "alpha"),
+        "table": os.getenv("CLICKHOUSE_TABLE", "equity_prices"),
+        "exchange_default": os.getenv("DEFAULT_EXCHANGE", "UNKNOWN"),
+        "batch_size": int(os.getenv("CH_BATCH_SIZE", "25000")),
+        "async_insert": os.getenv("CH_ASYNC_INSERT", "1") == "1",
+        "wait_async": os.getenv("CH_WAIT_ASYNC", "1") == "1",
+        "secure": os.getenv("CLICKHOUSE_SECURE", "0") == "1",
+        "protocol": os.getenv("CLICKHOUSE_PROTOCOL", "native"),  # 'native' or 'http'
     }
-    print(f"[env] loaded CLICKHOUSE_HOST={cfg['host']} CLICKHOUSE_DB={cfg['database']} TABLE={cfg['table']}")
+    print(f"[env] CLICKHOUSE {cfg['host']}:{cfg['port']} db={cfg['database']} table={cfg['table']}")
     return cfg

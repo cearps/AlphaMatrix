@@ -62,26 +62,23 @@ docker run --rm \
 
 - ✅ **Container builds successfully** with all dependencies
 - ✅ **Real Yahoo Finance integration** - Fetches actual OHLCV data
+- ✅ **Real ClickHouse integration** - Writes to `alpha.equity_prices` table
 - ✅ **Dry-run mode** - `--dry-run` flag for data preview
 - ✅ **Data normalization** - Handles MultiIndex columns, UTC timestamps
 - ✅ **Retry logic** - Exponential backoff for API failures
+- ✅ **Batch processing** - Configurable batch sizes with async inserts
+- ✅ **Idempotent writes** - UUID run tracking and ReplacingMergeTree deduplication
 - ✅ **Environment configuration** working from `infra/.env`
 - ✅ **Uses `pyproject.toml`** for dependency management
 
 ### Next Steps
 
-1. **Add ClickHouse integration** to `etl/pyproject.toml`:
+1. **Production hardening**:
 
-   ```toml
-   dependencies = [
-     "pandas>=2.2",
-     "python-dotenv>=1.0",
-     "yfinance>=0.2.54",
-     "tenacity>=9.0",
-     "pytz>=2024.1",
-     "clickhouse-connect>=0.7",  # TODO: uncomment when implementing
-   ]
-   ```
+   - Add health checks to Dockerfile
+   - Optimize layer caching
+   - Add security hardening
+   - Add monitoring and metrics
 
 2. **Update Dockerfile** for production:
 

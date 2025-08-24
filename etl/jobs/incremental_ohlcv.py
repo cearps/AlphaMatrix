@@ -14,20 +14,42 @@ def main():
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--lookback-days", type=int, default=7, help="fallback if no watermark in DB")
+    parser.add_argument("--exchange", default=None, help="Exchange identifier (overrides DEFAULT_EXCHANGE from .env, e.g., NASDAQ, ASX)")
     parser.add_argument("--dry-run", action="store_true", help="Fetch and print summary only, no DB writes")
     args = parser.parse_args()
     print(f"[incremental] args={args}")
 
-    cfg = load_clickhouse_env()
-    ch = ClickHouseClient(**{k: cfg[k] for k in ["host","port","user","password","database"]})
-
-    last_ts = ch.latest_timestamp(args.symbol, cfg["table"])
-    if last_ts is None:
+    # For dry-run mode, use lookback days directly
+    if args.dry_run:
         start = datetime.utcnow() - timedelta(days=args.lookback_days)
-        print(f"[incremental] no watermark; using start={start.isoformat()}")
+        print(f"[incremental] dry-run mode; using start={start.isoformat()}")
     else:
-        start = datetime.fromisoformat(last_ts)
-        print(f"[incremental] watermark found; start={start.isoformat()}")
+        # Load ClickHouse client to get latest timestamp
+        cfg = load_clickhouse_env()
+        ch = ClickHouseClient(
+            host=cfg["host"], port=cfg["port"], user=cfg["user"], password=cfg["password"], database=cfg["database"],
+            protocol=cfg["protocol"], secure=cfg["secure"], async_insert=cfg["async_insert"],
+            wait_async=cfg["wait_async"], batch_size=cfg["batch_size"]
+        )
+        
+        last_ts = ch.latest_timestamp(args.symbol, cfg["table"], args.interval)
+        if last_ts is None:
+            start = datetime.utcnow() - timedelta(days=args.lookback_days)
+            print(f"[incremental] no watermark; using start={start.isoformat()}")
+        else:
+            # Convert ClickHouse timestamp to datetime
+            if isinstance(last_ts, str):
+                start = datetime.fromisoformat(last_ts)
+            else:
+                start = last_ts
+            
+            # Check if the timestamp is too old (epoch start or very old)
+            epoch_start = datetime(1970, 1, 1)
+            if start <= epoch_start or start < datetime.utcnow() - timedelta(days=args.lookback_days * 2):
+                start = datetime.utcnow() - timedelta(days=args.lookback_days)
+                print(f"[incremental] watermark too old; using lookback start={start.isoformat()}")
+            else:
+                print(f"[incremental] watermark found; start={start.isoformat()}")
 
     end = datetime.utcnow()
 
@@ -41,8 +63,21 @@ def main():
         print_ohlcv_summary(df, args.symbol)
         return
 
-    rows = ch.upsert_ohlcv(df, cfg["table"])
-    print(f"[incremental] done symbol={args.symbol} rows_upserted={rows}")
+    # ClickHouse client already initialized above for non-dry-run mode
+    import uuid
+    run_id = uuid.uuid4()
+    
+    exchange = args.exchange if args.exchange else cfg["exchange_default"]
+    
+    inserted = ch.upsert_ohlcv(
+        df=df,
+        table=cfg["table"],
+        interval=args.interval,
+        source="yahoo",
+        ingest_run_id=run_id,
+        exchange_default=exchange
+    )
+    print(f"[incremental] committed rows={inserted} to {cfg['database']}.{cfg['table']} (exchange={exchange}, run_id={run_id})")
 
 if __name__ == "__main__":
     main()

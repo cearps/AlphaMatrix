@@ -207,35 +207,32 @@ mean   184.506663  185.803335  182.733332  183.933334  7.096227e+07
 ### Current State
 
 - ✅ **Real Yahoo Finance integration** - Fetches actual OHLCV data
+- ✅ **Real ClickHouse integration** - Writes to `alpha.equity_prices` table
 - ✅ **Data normalization** - Handles MultiIndex columns, UTC timestamps
 - ✅ **Retry logic** - Exponential backoff for API failures
 - ✅ **Data cleanup** - Deduplication, NaN removal, volume validation
 - ✅ **Dry-run mode** - `--dry-run` flag for data preview without DB writes
 - ✅ **Comprehensive summaries** - Detailed data statistics and validation
+- ✅ **Batch processing** - Configurable batch sizes with async inserts
+- ✅ **Idempotent writes** - UUID run tracking and ReplacingMergeTree deduplication
 - ✅ **Docker containerization** - Works in both local and containerized environments
 - ✅ **Environment configuration** - Reads from `infra/.env`
 
 ### Next Steps
 
-1. **Implement ClickHouse client:**
-
-   - Add `clickhouse-connect` dependency
-   - Implement actual database operations
-   - Add connection pooling and retries
-
-2. **Implement data validation:**
+1. **Implement data validation:**
 
    - Add OHLC bounds checking (high >= max(open, close))
    - Add timestamp validation (monotonic, no gaps)
    - Add duplicate detection and handling
 
-3. **Add comprehensive testing:**
+2. **Add comprehensive testing:**
 
    - Unit tests for each component
    - Integration tests with mock data
    - End-to-end tests with real data
 
-4. **Performance optimizations:**
+3. **Performance optimizations:**
    - Batch processing for multiple symbols
    - Parallel downloads for different time periods
    - Caching for frequently accessed data
