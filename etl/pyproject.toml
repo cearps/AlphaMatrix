@@ -14,3 +14,21 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.2",
+  "pytest-cov>=5.0",
+  "freezegun>=1.5",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers --disable-warnings --cov=etl --cov-report=term-missing"
+testpaths = ["etl/tests"]
+
+markers = [
+  "unit: fast, no network, no DB",
+  "integration: opt-in; may use local resources like ClickHouse",
+  "e2e: slow end-to-end, requires network and/or running services"
+]
