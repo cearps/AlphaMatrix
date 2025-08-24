@@ -1,0 +1,17 @@
+# Test image for running pytest in CI
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy the entire repository for testing
+COPY . /app/
+
+# Install test dependencies
+RUN pip install --no-cache-dir -e ./etl[test]
+
+# Set environment variables for testing
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Default command to run tests
+CMD ["python", "-m", "pytest", "etl/tests/", "-m", "unit", "--maxfail=1", "-v"]

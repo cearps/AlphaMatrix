@@ -48,14 +48,56 @@ AlphaMatrix stitches together fast C++ analytics, flexible Python APIs and a mod
 
 ## 4  Module Details
 
-| Dir        | Responsibility                                            | Key Tech                                     |
-| ---------- | --------------------------------------------------------- | -------------------------------------------- |
-| `core/`    | Back‑test engine, analytics libs, C++ greeks via pybind11 | C++20, Python 3.12                           |
-| `api/`     | FastAPI app, auth, orchestration of runs                  | FastAPI, Pydantic, Alembic                   |
-| `web/`     | Front‑end dashboard & wizard                              | React 19, Vite, shadcn/ui, Recharts          |
-| `scripts/` | One‑off ETL, benchmarks, dev helpers                      | Python CLI, Rich                             |
-| `ci/`      | GitHub Actions workflows, lint, latency tests             | actions‑python, clang‑tidy, pytest‑benchmark |
-| `infra/`   | Docker Compose, k8s Helm charts                           | ClickHouse, Postgres, Grafana                |
+| Dir        | Responsibility                                            | Key Tech                                        |
+| ---------- | --------------------------------------------------------- | ----------------------------------------------- |
+| `core/`    | Back‑test engine, analytics libs, C++ greeks via pybind11 | C++20, Python 3.12                              |
+| `api/`     | FastAPI app, auth, orchestration of runs                  | FastAPI, Pydantic, Alembic                      |
+| `web/`     | Front‑end dashboard & wizard                              | React 19, Vite, shadcn/ui, Recharts             |
+| `scripts/` | One‑off ETL, benchmarks, dev helpers                      | Python CLI, Rich                                |
+| `ci/`      | GitHub Actions workflows, lint, latency tests             | actions‑python, clang‑tidy, pytest‑benchmark    |
+| `infra/`   | Docker Compose, k8s Helm charts                           | ClickHouse, Postgres, Grafana                   |
+| `etl/`     | **ETL Pipeline** - Yahoo Finance → ClickHouse             | Python, pandas, yfinance, clickhouse-connect ✅ |
+
+---
+
+## 4.1 ETL System
+
+The ETL system provides data ingestion from Yahoo Finance to ClickHouse for backtesting.
+
+### **Quick Start (ETL)**
+
+```bash
+# Install dependencies
+conda install pandas python-dotenv -y
+pip install -e ./etl
+
+# Run ETL jobs
+python -m etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d --dry-run
+python -m etl.jobs.incremental_ohlcv --symbol AAPL --interval 1d --lookback-days 5 --dry-run
+
+# Docker (from repo root)
+docker build -f infra/etl/Dockerfile -t alphamatrix-etl .
+docker run --rm -v "$(pwd)/infra/.env:/app/infra/.env:ro" alphamatrix-etl python -m etl.jobs.backfill_ohlcv --symbol AAPL --start 2020-01-01 --end 2020-01-10 --interval 1d --dry-run
+```
+
+### **ETL File Organization**
+
+```
+etl/                    # Core ETL package
+├── adapters/          # Data source adapters (Yahoo Finance, etc.)
+├── io/               # ClickHouse client
+├── transforms/       # Data validation & mapping
+├── jobs/             # ETL job runners
+└── utils/            # Environment & logging
+
+infra/etl/            # ETL infrastructure
+└── Dockerfile        # ETL container
+
+docs/
+└── etl-ohlcv-yahoo-clickhouse.md  # Complete ETL design
+```
+
+**📖 Full ETL Documentation:** See [`etl/README.md`](etl/README.md) for detailed usage and development guide.
 
 ---
 
@@ -141,7 +183,7 @@ _Full guidelines live in [`CONTRIBUTING.md`](CONTRIBUTING.md)._
 
 ## 10  Disclaimers
 
-1. **Not financial advice**:  All information, code, and examples provided in this repository are for demonstration and educational purposes only. They should not be interpreted as investment, trading, or financial advice.
-2. **No Ownership of Third-Party Research/Data**:  Any referenced market data, research, or external content remains the property of its respective owners. This repository does not claim authorship or rights to such materials.
+1. **Not financial advice**: All information, code, and examples provided in this repository are for demonstration and educational purposes only. They should not be interpreted as investment, trading, or financial advice.
+2. **No Ownership of Third-Party Research/Data**: Any referenced market data, research, or external content remains the property of its respective owners. This repository does not claim authorship or rights to such materials.
 3. **Educational Use Only**: The code and documentation are intended solely to illustrate technical concepts in quantitative finance and data processing. They are not intended for live trading or commercial deployment without independent review and validation.
-4.  **Exercise Answers Not Guaranteed Correct**: Any solutions provided to exercises are based on the author’s understanding at the time of writing. They may contain errors and should not be relied upon as authoritative answers without independent verification.
+4. **Exercise Answers Not Guaranteed Correct**: Any solutions provided to exercises are based on the author’s understanding at the time of writing. They may contain errors and should not be relied upon as authoritative answers without independent verification.
