@@ -12,7 +12,7 @@ from alphamatrix.etl.io.clickhouse_client import ClickHouseClient
 def main():
     init_logging()
     logger = get_logger(__name__)
-    parser = argparse.ArgumentParser(description="Backfill OHLCV (SKELETON)")
+    parser = argparse.ArgumentParser(description="Backfill OHLCV")
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--start", required=True, help="YYYY-MM-DD")
     parser.add_argument("--end", required=True, help="YYYY-MM-DD")

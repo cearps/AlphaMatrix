@@ -8,6 +8,7 @@ from alphamatrix.api.config import load_config
 
 app = FastAPI(title="AlphaMatrix API", version="0.1.0")
 
+@app.get("/")
 @app.get("/health")
 def health_check():
     return {

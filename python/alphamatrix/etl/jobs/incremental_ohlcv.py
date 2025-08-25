@@ -11,7 +11,7 @@ from alphamatrix.etl.io.clickhouse_client import ClickHouseClient
 def main():
     init_logging()
     logger = get_logger(__name__)
-    parser = argparse.ArgumentParser(description="Incremental OHLCV (SKELETON)")
+    parser = argparse.ArgumentParser(description="Incremental OHLCV")
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--lookback-days", type=int, default=7, help="fallback if no watermark in DB")
