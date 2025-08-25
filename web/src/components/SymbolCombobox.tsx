@@ -31,6 +31,7 @@ export default function SymbolCombobox({
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const items = filterSymbols(query);
+  const custom = (query || "").trim().toUpperCase();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -50,10 +51,28 @@ export default function SymbolCombobox({
             placeholder="Search ticker..."
             value={query}
             onValueChange={setQuery}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && custom) {
+                onChange(custom);
+                setOpen(false);
+              }
+            }}
           />
           <CommandList>
             <CommandEmpty>No results.</CommandEmpty>
             <CommandGroup heading="Symbols">
+              {custom && !items.includes(custom) && (
+                <CommandItem
+                  key={`custom-${custom}`}
+                  value={custom}
+                  onSelect={() => {
+                    onChange(custom);
+                    setOpen(false);
+                  }}
+                >
+                  {custom}
+                </CommandItem>
+              )}
               {items.map((sym) => (
                 <CommandItem
                   key={sym}

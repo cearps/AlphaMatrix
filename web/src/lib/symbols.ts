@@ -15,6 +15,7 @@ export const COMMON_SYMBOLS = [
   "WBC.AX",
   "TLS.AX",
   "NDQ.AX",
+  "PLTR",
 ];
 
 export function filterSymbols(
