@@ -4,6 +4,7 @@ import type {
   BackfillRequest,
   IncrementalRequest,
   JobStatus,
+  BulkJobStatus,
 } from "./types";
 
 const API = axios.create({
@@ -29,13 +30,15 @@ export async function fetchOhlcv(p: {
   });
   return data;
 }
-export async function postBackfill(body: BackfillRequest): Promise<JobStatus> {
+export async function postBackfill(
+  body: BackfillRequest
+): Promise<BulkJobStatus> {
   const { data } = await API.post("/v1/etl/backfill", body);
   return data;
 }
 export async function postIncremental(
   body: IncrementalRequest
-): Promise<JobStatus> {
+): Promise<BulkJobStatus> {
   const { data } = await API.post("/v1/etl/incremental", body);
   return data;
 }

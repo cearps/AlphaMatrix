@@ -13,7 +13,8 @@ export type OhlcvResponse = {
   data: Bar[];
 };
 export type BackfillRequest = {
-  symbol: string;
+  symbol?: string;
+  symbols?: string[];
   interval: string;
   start: string;
   end: string;
@@ -21,7 +22,8 @@ export type BackfillRequest = {
   dry_run?: boolean;
 };
 export type IncrementalRequest = {
-  symbol: string;
+  symbol?: string;
+  symbols?: string[];
   interval: string;
   lookback_days: number;
   exchange?: string;
@@ -33,3 +35,4 @@ export type JobStatus = {
   detail?: string;
   rows_processed?: number;
 };
+export type BulkJobStatus = { run_ids: string[]; status: "queued" };

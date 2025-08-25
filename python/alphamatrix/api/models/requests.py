@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, model_validator
+from typing import Optional, List
 from datetime import datetime
 
 class OhlcvQuery(BaseModel):
@@ -11,16 +11,32 @@ class OhlcvQuery(BaseModel):
     aggregate: Optional[str] = Field(default=None, description="none|minute|hour|day")
 
 class BackfillRequest(BaseModel):
-    symbol: str
+    symbol: Optional[str] = None
+    symbols: Optional[List[str]] = Field(default=None, description="Optional list of symbols for bulk backfill")
     interval: str = "1d"
     start: datetime
     end: datetime
     exchange: Optional[str] = None
     dry_run: bool = False
 
+    @model_validator(mode="after")
+    def ensure_symbol_present(self):
+        syms = self.symbols or []
+        if (self.symbol is None or self.symbol == "") and len(syms) == 0:
+            raise ValueError("Either 'symbol' or 'symbols' must be provided")
+        return self
+
 class IncrementalRequest(BaseModel):
-    symbol: str
+    symbol: Optional[str] = None
+    symbols: Optional[List[str]] = Field(default=None, description="Optional list of symbols for bulk incremental runs")
     interval: str = "1d"
     lookback_days: int = 7
     exchange: Optional[str] = None
     dry_run: bool = False
+
+    @model_validator(mode="after")
+    def ensure_symbol_present(self):
+        syms = self.symbols or []
+        if (self.symbol is None or self.symbol == "") and len(syms) == 0:
+            raise ValueError("Either 'symbol' or 'symbols' must be provided")
+        return self

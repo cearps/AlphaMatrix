@@ -14,30 +14,41 @@ import { postBackfill, postIncremental, getJob } from "../lib/api";
 import type { JobStatus } from "../lib/types";
 
 export default function JobPanel() {
-  const [symbol, setSymbol] = useState("AAPL");
+  const [symbolsText, setSymbolsText] = useState("AAPL\nMSFT");
   const [interval, setInterval] = useState("1d");
   const [start, setStart] = useState("2024-01-01T00:00:00Z");
   const [end, setEnd] = useState(new Date().toISOString());
   const [lookback, setLookback] = useState(7);
-  const [runId, setRunId] = useState<string | null>(null);
-  const [status, setStatus] = useState<JobStatus | null>(null);
+  const [runIds, setRunIds] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<Record<string, JobStatus>>({});
 
   useEffect(() => {
-    if (!runId) return;
+    if (!runIds.length) return;
     const t = setInterval(async () => {
-      const s = await getJob(runId);
-      setStatus(s);
-      if (["succeeded", "failed", "not_found"].includes(s.status))
-        clearInterval(t);
-    }, 1200);
+      const updates: Record<string, JobStatus> = {};
+      for (const id of runIds) {
+        const s = await getJob(id);
+        updates[id] = s;
+      }
+      setStatuses((prev) => ({ ...prev, ...updates }));
+      const done = runIds.every((id) =>
+        ["succeeded", "failed", "not_found"].includes(
+          (updates[id] || statuses[id])?.status as string
+        )
+      );
+      if (done) clearInterval(t);
+    }, 1400);
     return () => clearInterval(t);
-  }, [runId]);
+  }, [runIds]);
 
   return (
     <Card className="p-4 grid md:grid-cols-6 gap-4 items-end">
-      <div>
-        <Label>Symbol</Label>
-        <Input value={symbol} onChange={(e) => setSymbol(e.target.value)} />
+      <div className="md:col-span-2">
+        <Label>Symbols (comma or newline)</Label>
+        <Input
+          value={symbolsText}
+          onChange={(e) => setSymbolsText(e.target.value)}
+        />
       </div>
       <div>
         <Label>Interval</Label>
@@ -73,15 +84,18 @@ export default function JobPanel() {
       <div className="flex gap-2">
         <Button
           onClick={async () => {
+            const symbols = symbolsText
+              .split(/[\n,]/)
+              .map((s) => s.trim())
+              .filter(Boolean);
             const r = await postBackfill({
-              symbol,
+              symbols,
               interval,
               start,
               end,
               dry_run: false,
             });
-            setRunId(r.run_id);
-            setStatus(r);
+            setRunIds(r.run_ids);
           }}
         >
           Backfill
@@ -89,30 +103,43 @@ export default function JobPanel() {
         <Button
           variant="secondary"
           onClick={async () => {
+            const symbols = symbolsText
+              .split(/[\n,]/)
+              .map((s) => s.trim())
+              .filter(Boolean);
             const r = await postIncremental({
-              symbol,
+              symbols,
               interval,
               lookback_days: lookback,
               dry_run: false,
             });
-            setRunId(r.run_id);
-            setStatus(r);
+            setRunIds(r.run_ids);
           }}
         >
           Incremental
         </Button>
       </div>
-      {runId && (
+      {runIds.length > 0 && (
         <div className="md:col-span-6 text-sm">
-          run_id: <code>{runId}</code>
-        </div>
-      )}
-      {status && (
-        <div className="md:col-span-6 text-sm">
-          status: <b>{status.status}</b>
-          {status.rows_processed != null && (
-            <> • rows: {status.rows_processed}</>
-          )}
+          <div className="font-medium mb-1">Jobs</div>
+          <div className="grid md:grid-cols-2 gap-2">
+            {runIds.map((id) => {
+              const st = statuses[id];
+              return (
+                <div key={id} className="rounded border p-2">
+                  <div className="truncate">
+                    run_id: <code>{id}</code>
+                  </div>
+                  <div>
+                    status: <b>{st?.status ?? "queued"}</b>
+                    {st?.rows_processed != null && (
+                      <> • rows: {st.rows_processed}</>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </Card>
