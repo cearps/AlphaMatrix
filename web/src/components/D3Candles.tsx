@@ -102,6 +102,86 @@ export default function D3Candles({ data, height = 520 }: Props) {
       )
       .attr("fill", "#9ca3af");
 
+    // zoom/pan: scale x on zoom and redraw candles/axes
+    const zoomed = (event: d3.D3ZoomEvent<Element, unknown>) => {
+      const t = event.transform;
+      const zx = t.rescaleX(
+        d3
+          .scaleLinear()
+          .domain([0, data.length])
+          .range([margin.left, width - margin.right])
+      );
+      // map index back to positions
+      const bandwidth = x.bandwidth();
+      svg.selectAll("g").remove();
+
+      const x2 = d3
+        .scaleBand<Date>()
+        .domain(data.map(parseT))
+        .range([t.applyX(margin.left), t.applyX(width - margin.right)])
+        .padding(0.3);
+
+      const xAxis2 = (g: any) =>
+        g.attr("transform", `translate(0,${margin.top + hCandle})`).call(
+          d3
+            .axisBottom(x2)
+            .tickValues(
+              x2.domain().filter((_, i) => i % Math.ceil(data.length / 8) === 0)
+            )
+            .tickFormat((d: any) => d3.timeFormat("%Y-%m-%d")(d))
+        );
+
+      svg.append("g").call(xAxis2);
+      svg.append("g").call(yAxis);
+
+      svg
+        .append("g")
+        .selectAll("line")
+        .data(data)
+        .join("line")
+        .attr("x1", (d) => x2(parseT(d))! + x2.bandwidth() / 2)
+        .attr("x2", (d) => x2(parseT(d))! + x2.bandwidth() / 2)
+        .attr("y1", (d) => y(d.high))
+        .attr("y2", (d) => y(d.low))
+        .attr("stroke", "#555");
+
+      svg
+        .append("g")
+        .selectAll("rect")
+        .data(data)
+        .join("rect")
+        .attr("x", (d) => x2(parseT(d))!)
+        .attr("y", (d) => y(Math.max(d.open, d.close)))
+        .attr("width", x2.bandwidth())
+        .attr("height", (d) => Math.max(1, Math.abs(y(d.open) - y(d.close))))
+        .attr("fill", (d) => (d.close >= d.open ? "#16a34a" : "#dc2626"));
+
+      svg
+        .append("g")
+        .selectAll("rect.vol")
+        .data(data)
+        .join("rect")
+        .attr("class", "vol")
+        .attr("x", (d) => x2(parseT(d))!)
+        .attr("y", (d) => yVol(d.volume))
+        .attr("width", x2.bandwidth())
+        .attr(
+          "height",
+          (d) => margin.top + hCandle + 12 + hVolume - yVol(d.volume)
+        )
+        .attr("fill", "#9ca3af");
+    };
+
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 20])
+      .translateExtent([
+        [margin.left, 0],
+        [width - margin.right, height],
+      ])
+      .on("zoom", zoomed);
+    svg.call(zoom as any);
+
     const onResize = () => {
       if (!ref.current) return;
       const newW = ref.current.clientWidth;
