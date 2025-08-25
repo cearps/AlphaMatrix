@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Controls from "../components/Controls";
 import D3Candles from "../components/D3Candles";
 import { fetchOhlcv } from "../lib/api";
 import Layout from "../components/Layout";
+import type { OhlcvResponse } from "../lib/types";
+
+type Params = { symbol: string; interval: string; start: string; end: string };
 
 export default function ChartPage() {
   const initial = useMemo(() => {
@@ -20,7 +23,7 @@ export default function ChartPage() {
       end: new Date().toISOString(),
     };
   }, []);
-  const [params, setParams] = useState(initial);
+  const [params, setParams] = useState<Params>(initial);
   useEffect(() => {
     try {
       localStorage.setItem("chart_params", JSON.stringify(params));
@@ -28,10 +31,41 @@ export default function ChartPage() {
       void 0;
     }
   }, [params]);
-  const q = useQuery({
+  const q = useQuery<OhlcvResponse>({
     queryKey: ["ohlcv", params],
-    queryFn: () => fetchOhlcv({ ...params, limit: 200000, aggregate: "none" }),
+    queryFn: () =>
+      fetchOhlcv({
+        symbol: params.symbol,
+        interval: params.interval,
+        start: params.start,
+        end: params.end,
+        limit: 200000,
+        aggregate: "none",
+      }),
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    // If you want to keep the previous series during refetch, use placeholderData
+    // placeholderData: (prev) => prev,
   });
+  const onRangeChange = useCallback((startISO: string, endISO: string) => {
+    // Debounce updates to avoid hammering the API during interactive changes
+    let t = (onRangeChange as any)._t as number | undefined;
+    if (t) window.clearTimeout(t);
+    (onRangeChange as any)._t = window.setTimeout(() => {
+      setParams((prev) => {
+        const prevStart = new Date(prev.start).getTime();
+        const prevEnd = new Date(prev.end).getTime();
+        const nextStart = new Date(startISO).getTime();
+        const nextEnd = new Date(endISO).getTime();
+        const same =
+          Math.abs(prevStart - nextStart) < 1 &&
+          Math.abs(prevEnd - nextEnd) < 1;
+        if (same) return prev;
+        return { ...prev, start: startISO, end: endISO };
+      });
+    }, 300);
+  }, []);
 
   return (
     <Layout>
@@ -46,7 +80,13 @@ export default function ChartPage() {
           Error loading data
         </div>
       )}
-      {q.data && q.data.rows > 0 && <D3Candles data={q.data.data} />}
+      {q.data && q.data.rows > 0 && (
+        <D3Candles
+          data={q.data.data}
+          height={560}
+          onRangeChange={onRangeChange}
+        />
+      )}
     </Layout>
   );
 }

@@ -24,7 +24,7 @@ export default function JobPanel() {
 
   useEffect(() => {
     if (!runIds.length) return;
-    const t = setInterval(async () => {
+    const t: number = window.setInterval(async () => {
       const updates: Record<string, JobStatus> = {};
       for (const id of runIds) {
         const s = await getJob(id);
@@ -36,9 +36,9 @@ export default function JobPanel() {
           (updates[id] || statuses[id])?.status as string
         )
       );
-      if (done) clearInterval(t);
+      if (done) window.clearInterval(t);
     }, 1400);
-    return () => clearInterval(t);
+    return () => window.clearInterval(t);
   }, [runIds]);
 
   return (
