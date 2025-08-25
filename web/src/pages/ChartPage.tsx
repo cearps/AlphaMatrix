@@ -10,7 +10,9 @@ export default function ChartPage() {
     try {
       const saved = localStorage.getItem("chart_params");
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch {
+      void 0;
+    }
     return {
       symbol: "AAPL",
       interval: "1d",
@@ -22,7 +24,9 @@ export default function ChartPage() {
   useEffect(() => {
     try {
       localStorage.setItem("chart_params", JSON.stringify(params));
-    } catch {}
+    } catch {
+      void 0;
+    }
   }, [params]);
   const q = useQuery({
     queryKey: ["ohlcv", params],

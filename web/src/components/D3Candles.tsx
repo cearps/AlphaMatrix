@@ -42,134 +42,95 @@ export default function D3Candles({ data, height = 520 }: Props) {
       .domain([0, d3.max(data, (d) => d.volume)!])
       .range([margin.top + hCandle + 12 + hVolume, margin.top + hCandle + 12]);
 
-    // axes
-    const xAxis = (g: any) =>
+    // helpers
+    const buildXAxis = (xScale: d3.ScaleBand<Date>) => (g: any) =>
       g.attr("transform", `translate(0,${margin.top + hCandle})`).call(
         d3
-          .axisBottom(x)
+          .axisBottom(xScale)
           .tickValues(
-            x.domain().filter((_, i) => i % Math.ceil(data.length / 8) === 0)
+            xScale
+              .domain()
+              .filter((_, i) => i % Math.ceil(data.length / 8) === 0)
           )
           .tickFormat((d: any) => d3.timeFormat("%Y-%m-%d")(d))
       );
 
-    const yAxis = (g: any) =>
-      g
-        .attr("transform", `translate(${margin.left},0)`)
-        .call(d3.axisLeft(y).ticks(6))
-        .call((g: any) => g.select(".domain").remove());
-
-    svg.append("g").call(xAxis);
-    svg.append("g").call(yAxis);
-
-    // wick
-    svg
-      .append("g")
-      .selectAll("line")
-      .data(data)
-      .join("line")
-      .attr("x1", (d) => x(parseT(d))! + x.bandwidth() / 2)
-      .attr("x2", (d) => x(parseT(d))! + x.bandwidth() / 2)
-      .attr("y1", (d) => y(d.high))
-      .attr("y2", (d) => y(d.low))
-      .attr("stroke", "#555");
-
-    // candles
-    svg
-      .append("g")
-      .selectAll("rect")
-      .data(data)
-      .join("rect")
-      .attr("x", (d) => x(parseT(d))!)
-      .attr("y", (d) => y(Math.max(d.open, d.close)))
-      .attr("width", x.bandwidth())
-      .attr("height", (d) => Math.max(1, Math.abs(y(d.open) - y(d.close))))
-      .attr("fill", (d) => (d.close >= d.open ? "#16a34a" : "#dc2626"));
-
-    // volume bars
-    svg
-      .append("g")
-      .selectAll("rect.vol")
-      .data(data)
-      .join("rect")
-      .attr("class", "vol")
-      .attr("x", (d) => x(parseT(d))!)
-      .attr("y", (d) => yVol(d.volume))
-      .attr("width", x.bandwidth())
-      .attr(
-        "height",
-        (d) => margin.top + hCandle + 12 + hVolume - yVol(d.volume)
-      )
-      .attr("fill", "#9ca3af");
-
-    // zoom/pan: scale x on zoom and redraw candles/axes
-    const zoomed = (event: d3.D3ZoomEvent<Element, unknown>) => {
-      const t = event.transform;
-      const zx = t.rescaleX(
-        d3
-          .scaleLinear()
-          .domain([0, data.length])
-          .range([margin.left, width - margin.right])
-      );
-      // map index back to positions
-      const bandwidth = x.bandwidth();
-      svg.selectAll("g").remove();
-
-      const x2 = d3
-        .scaleBand<Date>()
-        .domain(data.map(parseT))
-        .range([t.applyX(margin.left), t.applyX(width - margin.right)])
-        .padding(0.3);
-
-      const xAxis2 = (g: any) =>
-        g.attr("transform", `translate(0,${margin.top + hCandle})`).call(
-          d3
-            .axisBottom(x2)
-            .tickValues(
-              x2.domain().filter((_, i) => i % Math.ceil(data.length / 8) === 0)
-            )
-            .tickFormat((d: any) => d3.timeFormat("%Y-%m-%d")(d))
+    const drawAxes = (xScale: d3.ScaleBand<Date>) => {
+      svg.append("g").call(buildXAxis(xScale));
+      svg
+        .append("g")
+        .attr("class", "y-axis")
+        .call((g: any) =>
+          g
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(y).ticks(6))
+            .call((g2: any) => g2.select(".domain").remove())
         );
+    };
 
-      svg.append("g").call(xAxis2);
-      svg.append("g").call(yAxis);
-
+    const drawWicks = (xScale: d3.ScaleBand<Date>) => {
       svg
         .append("g")
         .selectAll("line")
         .data(data)
         .join("line")
-        .attr("x1", (d) => x2(parseT(d))! + x2.bandwidth() / 2)
-        .attr("x2", (d) => x2(parseT(d))! + x2.bandwidth() / 2)
+        .attr("x1", (d) => xScale(parseT(d))! + xScale.bandwidth() / 2)
+        .attr("x2", (d) => xScale(parseT(d))! + xScale.bandwidth() / 2)
         .attr("y1", (d) => y(d.high))
         .attr("y2", (d) => y(d.low))
         .attr("stroke", "#555");
+    };
 
+    const drawCandles = (xScale: d3.ScaleBand<Date>) => {
       svg
         .append("g")
         .selectAll("rect")
         .data(data)
         .join("rect")
-        .attr("x", (d) => x2(parseT(d))!)
+        .attr("x", (d) => xScale(parseT(d))!)
         .attr("y", (d) => y(Math.max(d.open, d.close)))
-        .attr("width", x2.bandwidth())
+        .attr("width", xScale.bandwidth())
         .attr("height", (d) => Math.max(1, Math.abs(y(d.open) - y(d.close))))
         .attr("fill", (d) => (d.close >= d.open ? "#16a34a" : "#dc2626"));
+    };
 
+    const drawVolumes = (xScale: d3.ScaleBand<Date>) => {
       svg
         .append("g")
         .selectAll("rect.vol")
         .data(data)
         .join("rect")
         .attr("class", "vol")
-        .attr("x", (d) => x2(parseT(d))!)
+        .attr("x", (d) => xScale(parseT(d))!)
         .attr("y", (d) => yVol(d.volume))
-        .attr("width", x2.bandwidth())
+        .attr("width", xScale.bandwidth())
         .attr(
           "height",
           (d) => margin.top + hCandle + 12 + hVolume - yVol(d.volume)
         )
         .attr("fill", "#9ca3af");
+    };
+
+    const render = (xScale: d3.ScaleBand<Date>) => {
+      svg.selectAll("g").remove();
+      drawAxes(xScale);
+      drawWicks(xScale);
+      drawCandles(xScale);
+      drawVolumes(xScale);
+    };
+
+    // initial draw
+    render(x);
+
+    // zoom/pan: rescale x band range and re-render
+    const zoomed = (event: d3.D3ZoomEvent<Element, unknown>) => {
+      const t = event.transform;
+      const x2 = d3
+        .scaleBand<Date>()
+        .domain(data.map(parseT))
+        .range([t.applyX(margin.left), t.applyX(width - margin.right)])
+        .padding(0.3);
+      render(x2);
     };
 
     const zoom = d3
