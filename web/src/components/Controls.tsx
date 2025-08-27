@@ -114,7 +114,6 @@ export default function Controls({ onSubmit, defaults }: Props) {
         ))}
       </div>
 
-      {null}
     </Card>
   );
 }
