@@ -53,6 +53,8 @@ switch ($Command) {
     
     "test" {
         Write-Host "Running all tests..." -ForegroundColor Yellow
+        # Ensure latest source is in the image
+        docker build -f infra/Dockerfile.test -t alphamatrix-test .
         docker run --rm alphamatrix-test
     }
     

@@ -1,0 +1,119 @@
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import SymbolCombobox from "./SymbolCombobox";
+
+type Props = {
+  onSubmit: (p: {
+    symbol: string;
+    interval: string;
+    start: string;
+    end: string;
+  }) => void;
+  defaults?: Partial<{
+    symbol: string;
+    interval: string;
+    start: string;
+    end: string;
+  }>;
+};
+
+const presets = [
+  { label: "1W", days: 7 },
+  { label: "1M", days: 30 },
+  { label: "3M", days: 90 },
+  { label: "YTD", ytd: true },
+  { label: "1Y", days: 365 },
+  { label: "Max", max: true },
+];
+
+function ytdRange(): { start: string; end: string } {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  return { start: start.toISOString(), end: now.toISOString() };
+}
+
+export default function Controls({ onSubmit, defaults }: Props) {
+  const [symbol, setSymbol] = useState(defaults?.symbol ?? "AAPL");
+  const [interval, setInterval] = useState(defaults?.interval ?? "1d");
+  const [start, setStart] = useState(defaults?.start ?? "2024-01-01T00:00:00Z");
+  const [end, setEnd] = useState(defaults?.end ?? new Date().toISOString());
+  const submit = () => onSubmit({ symbol, interval, start, end });
+
+  return (
+    <Card className="p-4 space-y-4">
+      <div className="grid md:grid-cols-5 gap-4 items-end">
+        <div>
+          <Label>Symbol</Label>
+          <SymbolCombobox value={symbol} onChange={setSymbol} />
+        </div>
+        <div>
+          <Label>Interval</Label>
+          <Select value={interval} onValueChange={setInterval}>
+            <SelectTrigger>
+              <SelectValue placeholder="Interval" />
+            </SelectTrigger>
+            <SelectContent>
+              {["1m", "5m", "15m", "30m", "1h", "1d", "1wk", "1mo"].map((i) => (
+                <SelectItem key={i} value={i}>
+                  {i}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Start (ISO)</Label>
+          <Input value={start} onChange={(e) => setStart(e.target.value)} />
+        </div>
+        <div>
+          <Label>End (ISO)</Label>
+          <Input value={end} onChange={(e) => setEnd(e.target.value)} />
+        </div>
+        <div className="flex gap-2">
+          <Button className="w-full" onClick={submit}>
+            Load
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {presets.map((p) => (
+          <Button
+            key={p.label}
+            variant="secondary"
+            onClick={() => {
+              const now = new Date();
+              if (p.ytd) {
+                const r = ytdRange();
+                setStart(r.start);
+                setEnd(r.end);
+              } else if (p.max) {
+                setStart("1970-01-01T00:00:00Z");
+                setEnd(now.toISOString());
+              } else if (p.days) {
+                const s = new Date(now);
+                s.setUTCDate(now.getUTCDate() - p.days);
+                setStart(s.toISOString());
+                setEnd(now.toISOString());
+              }
+              setTimeout(submit, 0);
+            }}
+          >
+            {p.label}
+          </Button>
+        ))}
+      </div>
+
+    </Card>
+  );
+}

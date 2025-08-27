@@ -21,3 +21,7 @@ class JobStatus(BaseModel):
     status: str           # queued|running|succeeded|failed
     detail: Optional[str] = None
     rows_processed: Optional[int] = None
+
+class BulkJobStatus(BaseModel):
+    run_ids: List[str]
+    status: str = "queued"
