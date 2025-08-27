@@ -33,8 +33,8 @@ export default function JobPanel() {
       setStatuses((prev) => ({ ...prev, ...updates }));
       const done = runIds.every((id) =>
         ["succeeded", "failed", "not_found"].includes(
-          (updates[id] || statuses[id])?.status as string
-        )
+          (updates[id] || statuses[id])?.status as string,
+        ),
       );
       if (done) window.clearInterval(t);
     }, 1400);
@@ -45,9 +45,12 @@ export default function JobPanel() {
     <Card className="p-4 grid md:grid-cols-6 gap-4 items-end">
       <div className="md:col-span-2">
         <Label>Symbols (comma or newline)</Label>
-        <Input
+        <textarea
           value={symbolsText}
           onChange={(e) => setSymbolsText(e.target.value)}
+          rows={4}
+          className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          placeholder={"AAPL, MSFT\nGOOGL"}
         />
       </div>
       <div>
@@ -132,9 +135,7 @@ export default function JobPanel() {
                   </div>
                   <div>
                     status: <b>{st?.status ?? "queued"}</b>
-                    {st?.rows_processed != null && (
-                      <> • rows: {st.rows_processed}</>
-                    )}
+                    {st?.rows_processed != null && <> • rows: {st.rows_processed}</>}
                   </div>
                 </div>
               );

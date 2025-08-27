@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Controls from "../components/Controls";
-import D3Candles from "../components/D3Candles";
+import CandleChart from "../components/charts/CandleChart";
 import { fetchOhlcv } from "../lib/api";
 import Layout from "../components/Layout";
 import type { OhlcvResponse } from "../lib/types";
@@ -58,9 +58,7 @@ export default function ChartPage() {
         const prevEnd = new Date(prev.end).getTime();
         const nextStart = new Date(startISO).getTime();
         const nextEnd = new Date(endISO).getTime();
-        const same =
-          Math.abs(prevStart - nextStart) < 1 &&
-          Math.abs(prevEnd - nextEnd) < 1;
+        const same = Math.abs(prevStart - nextStart) < 1 && Math.abs(prevEnd - nextEnd) < 1;
         if (same) return prev;
         return { ...prev, start: startISO, end: endISO };
       });
@@ -71,9 +69,7 @@ export default function ChartPage() {
     <Layout>
       <Controls onSubmit={setParams} defaults={params} />
       {q.isLoading && (
-        <div className="mt-4 rounded-md border border-border bg-card p-4 text-sm">
-          Loading…
-        </div>
+        <div className="mt-4 rounded-md border border-border bg-card p-4 text-sm">Loading…</div>
       )}
       {q.error && (
         <div className="mt-4 rounded-md border border-red-300 bg-red-50 p-4 text-red-700 text-sm">
@@ -81,11 +77,7 @@ export default function ChartPage() {
         </div>
       )}
       {q.data && q.data.rows > 0 && (
-        <D3Candles
-          data={q.data.data}
-          height={560}
-          onRangeChange={onRangeChange}
-        />
+        <CandleChart data={q.data.data} height={560} onRangeChange={onRangeChange} />
       )}
     </Layout>
   );

@@ -6,6 +6,7 @@ export type Bar = {
   close: number;
   volume: number;
 };
+export type ChartMargins = { top: number; right: number; bottom: number; left: number };
 export type OhlcvResponse = {
   symbol: string;
   interval: string;

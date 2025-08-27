@@ -30,15 +30,16 @@ export async function fetchOhlcv(p: {
   });
   return data;
 }
-export async function postBackfill(
-  body: BackfillRequest
-): Promise<BulkJobStatus> {
+
+export async function fetchSymbols(p: { q?: string; limit?: number; interval?: string } = {}) {
+  const { data } = await API.get("/v1/symbols", { params: p });
+  return data as { symbols: string[] };
+}
+export async function postBackfill(body: BackfillRequest): Promise<BulkJobStatus> {
   const { data } = await API.post("/v1/etl/backfill", body);
   return data;
 }
-export async function postIncremental(
-  body: IncrementalRequest
-): Promise<BulkJobStatus> {
+export async function postIncremental(body: IncrementalRequest): Promise<BulkJobStatus> {
   const { data } = await API.post("/v1/etl/incremental", body);
   return data;
 }

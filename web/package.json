@@ -6,8 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "lint": "eslint --ext .ts,.tsx src",
+    "format": "prettier -w .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest",
+    "preview": "vite preview",
+    "story": "storybook dev -p 6006"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

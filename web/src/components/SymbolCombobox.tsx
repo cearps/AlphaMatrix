@@ -8,12 +8,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { filterSymbols } from "../lib/symbols";
+import { useEffect, useMemo, useState } from "react";
+import { fetchSymbols } from "@/lib/api";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,37 +21,55 @@ type Props = {
   placeholder?: string;
 };
 
-export default function SymbolCombobox({
-  value,
-  onChange,
-  placeholder = "Select symbol",
-}: Props) {
+export default function SymbolCombobox({ value, onChange, placeholder = "Select symbol" }: Props) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
-  const items = filterSymbols(query);
+  const [remote, setRemote] = useState<string[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const run = async () => {
+      try {
+        const { symbols } = await fetchSymbols({ q: query, limit: 50 });
+        if (alive) setRemote(symbols);
+      } catch {
+        if (alive) setRemote(null);
+      }
+    };
+    run();
+    return () => {
+      alive = false;
+    };
+  }, [query]);
+  const items = useMemo(() => {
+    return remote && remote.length > 0 ? remote : filterSymbols(query);
+  }, [remote, query]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          className="justify-between w-full"
-        >
+        <Button variant="outline" role="combobox" className="justify-between w-full">
           {value || placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[280px]">
         <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search ticker..."
-            value={query}
-            onValueChange={setQuery}
-          />
+          <CommandInput placeholder="Search ticker..." value={query} onValueChange={setQuery} />
           <CommandList>
             <CommandEmpty>No results.</CommandEmpty>
             <CommandGroup heading="Symbols">
+              {query && !items.includes(query.toUpperCase()) && (
+                <CommandItem
+                  key={`use-${query}`}
+                  value={query}
+                  onSelect={() => {
+                    onChange(query.toUpperCase());
+                    setOpen(false);
+                  }}
+                >
+                  Use "{query.toUpperCase()}"
+                </CommandItem>
+              )}
               {items.map((sym) => (
                 <CommandItem
                   key={sym}
@@ -64,10 +80,7 @@ export default function SymbolCombobox({
                   }}
                 >
                   <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      sym === value ? "opacity-100" : "opacity-0"
-                    )}
+                    className={cn("mr-2 h-4 w-4", sym === value ? "opacity-100" : "opacity-0")}
                   />
                   {sym}
                 </CommandItem>
