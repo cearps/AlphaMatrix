@@ -17,9 +17,10 @@ def test_backfill_enqueue(client):
     
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["status"] in ("queued", "running", "succeeded", "failed")
-    assert "run_id" in body
-    assert isinstance(body["run_id"], str)
+    assert body.get("status") in ("queued", "running", "succeeded", "failed")
+    assert "run_ids" in body and isinstance(body["run_ids"], list)
+    assert len(body["run_ids"]) >= 1
+    assert isinstance(body["run_ids"][0], str)
 
 @pytest.mark.unit
 def test_incremental_enqueue(client):
@@ -33,9 +34,10 @@ def test_incremental_enqueue(client):
     
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["status"] in ("queued", "running", "succeeded", "failed")
-    assert "run_id" in body
-    assert isinstance(body["run_id"], str)
+    assert body.get("status") in ("queued", "running", "succeeded", "failed")
+    assert "run_ids" in body and isinstance(body["run_ids"], list)
+    assert len(body["run_ids"]) >= 1
+    assert isinstance(body["run_ids"][0], str)
 
 @pytest.mark.unit
 def test_backfill_missing_params(client):
@@ -92,5 +94,5 @@ def test_backfill_with_exchange(client):
     
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["status"] in ("queued", "running", "succeeded", "failed")
-    assert "run_id" in body
+    assert body.get("status") in ("queued", "running", "succeeded", "failed")
+    assert "run_ids" in body and isinstance(body["run_ids"], list)

@@ -4,6 +4,7 @@ Test-specific FastAPI app that doesn't require ClickHouse during startup.
 from fastapi import FastAPI
 from datetime import datetime
 from alphamatrix.api.routers import ohlcv, etl
+from alphamatrix.api.routers import symbols as symbols_router
 from alphamatrix.api.deps import get_clickhouse_client
 
 # Create a test app without startup/shutdown events
@@ -33,7 +34,17 @@ def get_fake_clickhouse_client():
 
         def query(self, sql, parameters=None):
             self.queries.append((sql, parameters))
-            # Return 3 rows for ohlcv
+            sql_upper = (sql or "").upper()
+            if "SELECT DISTINCT SYMBOL" in sql_upper:
+                symbols = ["AAPL", "MSFT", "GOOGL"]
+                q = (parameters or {}).get("q")
+                if q:
+                    q_u = str(q).upper()
+                    symbols = [s for s in symbols if q_u in s.upper()]
+                lim = (parameters or {}).get("lim", len(symbols))
+                symbols = symbols[: int(lim)]
+                return FakeCHResult([(s,) for s in symbols])
+            # default: Return 3 rows for ohlcv
             return FakeCHResult([
                 ("2024-01-01 00:00:00", 100.0, 101.0, 99.5, 100.5, 1000),
                 ("2024-01-02 00:00:00", 100.5, 102.0, 100.0, 101.0, 1500),
@@ -73,3 +84,4 @@ test_app.dependency_overrides[get_clickhouse_client] = get_fake_clickhouse_clien
 # Include routers
 test_app.include_router(ohlcv.router)
 test_app.include_router(etl.router)
+test_app.include_router(symbols_router.router)
